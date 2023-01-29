@@ -1,4 +1,5 @@
 import './app.css'
+import 'animate.css';
 import { Table } from './components/Table'
 
 function App() {
