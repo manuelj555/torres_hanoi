@@ -1,45 +1,48 @@
 import confetti from "canvas-confetti"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { initialize, moveFloor } from "../model/GameService"
-import { GameType } from "../model/types"
+import { GameType, TowerType } from "../model/types"
 
-const maxItems = 4
+const maxItems = 5
 
 export const useGame = () => {
-  const [game, setGame] = useState<GameType>(() => initialize(maxItems))
-  const [selectedTower, setSelectedTower] = useState<number | null>(null)
+  const [game, setGame] = useState<GameType>(() => initialize(maxItems, true))
   const [isInvalidMovement, setIsInvalidMovement] = useState<boolean>(false)
 
-  const selectTower = useCallback((towerIndex: number): void => {
-    if (selectedTower === null) {
-      setSelectedTower(towerIndex)
-    } else if (selectedTower !== towerIndex) {
-      const newGame = moveFloor(game, selectedTower, towerIndex)
+  const move = (from: TowerType, to: TowerType) => {
+    const fromIndex = game.towers.findIndex(t => t.id === from.id)
+    const toIndex = game.towers.findIndex(t => t.id === to.id)
 
-      if (newGame) {
-        if (newGame.finished) {
-          confetti({ particleCount: 100 })
-        }
+    if (fromIndex === -1 || toIndex === -1) return
+    if (fromIndex === toIndex) return
 
-        setGame(newGame)
-      } else {
-        setIsInvalidMovement(true)
-        setTimeout(() => setIsInvalidMovement(false), 1200)
+    const newGame = moveFloor(game, fromIndex, toIndex)
+
+    if (newGame) {
+      if (newGame.finished) {
+        confetti({ particleCount: 100 })
       }
-
-      setSelectedTower(null)
+      setGame(newGame)
+    } else {
+      setIsInvalidMovement(true)
+      setTimeout(() => setIsInvalidMovement(false), 1200)
     }
-  }, [game, selectedTower, setGame, setSelectedTower])
+  }
 
-  const reset = useCallback(() => {
+  const reset = () => {
     setGame(initialize(maxItems))
-  }, [setGame, maxItems])
+  }
+
+  useEffect(() => {
+    if (game.movements > 0) {
+      window.localStorage.setItem('hanoi_game_data', JSON.stringify(game))
+    }
+  }, [game])
 
   return {
     game,
-    selectedTower,
     isInvalidMovement,
     reset,
-    selectTower,
+    move,
   }
 }

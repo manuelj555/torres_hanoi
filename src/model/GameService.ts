@@ -2,17 +2,24 @@ import produce from "immer"
 import { accept, getTop, isFull } from "./TowerServices"
 import { FloorType, GameType, TowerType } from "./types"
 
-export function initialize(maxItems: number): GameType {
-  return <GameType>{
+export function initialize(maxItems: number, useCache: boolean = false): GameType {
+
+  if (useCache && window.localStorage.getItem('hanoi_game_data')) {
+    return JSON.parse(window.localStorage.getItem('hanoi_game_data') ?? '')
+  } else if (!useCache) {
+    window.localStorage.removeItem('hanoi_game_data')
+  }
+
+  return {
     finished: false,
     movements: 0,
     maxItems,
     towers: [
-      createTower(maxItems, true),
-      createTower(maxItems, false),
-      createTower(maxItems, false),
+      createTower(1, maxItems, true),
+      createTower(2, maxItems, false),
+      createTower(3, maxItems, false),
     ],
-  }
+  } as GameType
 }
 
 // export function moveFloor(game: GameType, from: TowerType, to: TowerType): GameType | false {
@@ -21,7 +28,7 @@ export function moveFloor(game: GameType, from: number, to: number): GameType | 
     return false
   }
   const fromFloor = getTop(game.towers[from])
-  console.log({ fromFloor, from, to })
+  console.log({ fromFloor, from, to }, game.towers[from])
 
   if (fromFloor === null || !accept(game.towers[to], fromFloor)) {
     return false
@@ -38,7 +45,7 @@ export function moveFloor(game: GameType, from: number, to: number): GameType | 
   })
 }
 
-export function createTower(maxItems: number, filled: boolean): TowerType {
+export function createTower(id: number, maxItems: number, filled: boolean): TowerType {
   const floors: Array<FloorType> = []
 
   if (filled) {
@@ -47,7 +54,7 @@ export function createTower(maxItems: number, filled: boolean): TowerType {
     }
   }
 
-  return { floors, maxItems }
+  return { id, floors, maxItems }
 }
 
 function getRandomColor(): string {

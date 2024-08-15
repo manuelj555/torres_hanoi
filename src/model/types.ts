@@ -5,6 +5,7 @@ export type FloorType = {
 }
 
 export type TowerType = {
+  id: number,
   maxItems: number
   floors: Array<FloorType>
 }
